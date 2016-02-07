@@ -20,6 +20,7 @@
 
 
 #include "main.h"
+#define DEBUG
 
 using namespace std;
 
@@ -28,7 +29,17 @@ int main(int argc, char *argv[]){
 	puts(PROJECT_COPYRIGHT);
 	puts("");
 	
-	
+#ifndef DEBUG
+	char path[260];
+
+    GetModuleFileName(NULL,path,260);
+
+    HWND console = FindWindow("ConsoleWindowClass",path);
+
+    if(IsWindow(console))
+
+    ShowWindow(console,SW_HIDE); // hides the 
+#endif 
 	string basepath = dirBasename(getSelfPath());
 	
 	time_t rawtime;
