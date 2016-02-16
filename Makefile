@@ -2,6 +2,7 @@
 CC = gcc
 CPP = g++
 CFLAGS = -Wall -O3
+CPPFLAGS = -std=c++11
 #CFLAGS = -I"C:\MinGW\include"
 LDFLAGS = 
 #LDFLAGS = -L"C:\MinGW\lib" -mwindows -s
@@ -17,7 +18,7 @@ build/keylogger.exe: build/main.o build/functions.o
 	$(CPP) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 build/main.o: src/main.cpp src/main.h src/config.h build
-	$(CPP) $(CFLAGS) -c $< -o $@
+	$(CPP) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 build/functions.o: src/functions.cpp src/functions.h build
 	$(CPP) $(CFLAGS) -c $< -o $@
@@ -27,7 +28,7 @@ build/test_keylogger.exe: build/test_keylogger.o build/functions.o
 	$@
 
 build/test_keylogger.o: tests/test_keylogger.cpp build
-	$(CPP) $(CFLAGS) -c $< -o $@
+	$(CPP) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 build:
 	$(MKDIR) "$@"

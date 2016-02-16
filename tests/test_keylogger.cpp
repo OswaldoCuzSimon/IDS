@@ -20,7 +20,7 @@ int main(int argc, char *argv[]){
 #endif
 	puts("");
 	
-	printf("function itoa:       %p\n", itoa);
+//	printf("function itoa:       %p\n", itoa);
 	printf("function time:       %p\n", time);
 	printf("function localtime:  %p\n", localtime);
 	printf("function strftime:   %p\n", strftime);

