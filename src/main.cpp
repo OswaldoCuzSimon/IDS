@@ -51,7 +51,6 @@ int main(int argc, char *argv[]){
 	ofstream klogout(filepath);
 	
 	string title,lastTitle = "";
-	
 	while(1){
 		Sleep(2); // give other programs time to run
 		
@@ -71,20 +70,10 @@ int main(int argc, char *argv[]){
 				klogout << endl << title <<" ";
 #ifdef DEBUG
 				cout << endl << title <<" ";
-#endif
-			}
-			lastTitle = title;
-		}
-		
-		// logging keys, thats the keylogger
-		int c = keyPressed();
-				
-		if(c!=0){
-			klogout << (short)c<<" " ;
-			klogout.flush();
-		}
-				
+#endif		
 				//lastc = c;
+			}
+		}
 	}
 	
 	klogout.close();
@@ -219,7 +208,7 @@ int keyPressed(){
 void detectorAIS(){
 	map<string,vector<int> > self;
 	map<int,string> keys;
-	string title,lastTitle,url = "";
+	string title,lastTitle,url = "dataset.data";
 	int tamMuestra,lenPalabra;
 	vector<int> currentInput;
 	
@@ -234,6 +223,10 @@ void detectorAIS(){
 	strSize=10;
 	tamMuestra=200;
 	
+	vector<string> nonself,selfvec = convertir(self);
+	currentInput = obtenerMuestra(currentInput,tamMuestra,lenPalabra);
+	GenericNegativeSelection gns(r,detectorSize,strSize);
+	vector<string> repertories = gns.generatingRepertoire( selfvec );
 	while(1){
 		Sleep(2); // give other programs time to run
 		
@@ -246,10 +239,8 @@ void detectorAIS(){
 		if(lastTitle != title){		
 			lastTitle = title;
 //			Detection time
-			currentInput = obtenerMuestra(currentInput,tamMuestra,lenPalabra);
-			GenericNegativeSelection gns(r,detectorSize,strSize);
+			nonself = gns.censoring(selfvec,repertories);
 
-			vector<string> nonself = gns.negativeSelectionAlgorithm( convertir(self) );
 			for(string i:nonself){
 				cout<<i;
 			}cout<<endl;
