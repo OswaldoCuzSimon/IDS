@@ -8,6 +8,10 @@
 #ifndef ALGORITHMAIS_H
 #define	ALGORITHMAIS_H
 
+#include <map>
+#include <vector>
+#include "dataCollector.h"
+
 using namespace std;
 class GenericNegativeSelection{
 	private:
@@ -54,7 +58,7 @@ std::vector<string> GenericNegativeSelection::generatingRepertoire(std::vector<s
 		for (unsigned int i = 0; i < self.size(); i++) {
 			if (matches(rs, self[i])) {
 				matchUp=true;
-//				cerr<<"No match repertorie g\n";
+				cerr<<"No match repertorie g\n";
 				break;
 			}
 		}
@@ -78,7 +82,7 @@ std::vector<string> GenericNegativeSelection::censoring(std::vector<string> self
 }
 bool GenericNegativeSelection::matches(string a, string b){
 	unsigned int i,j;
-	int mem[a.size()][a.size()];
+	int mem[a.size()+1][a.size()+1];
     
     for(i=1;i<=a.size();i++){
         mem[0][i]=i;
@@ -100,14 +104,20 @@ bool GenericNegativeSelection::matches(string a, string b){
     }
 //	cerr<<mem[b.size()][a.size()]<<"-"<<r<<endl;
     return mem[b.size()][a.size()]<r;
-//	return true;
 }
 // private methods
 string GenericNegativeSelection::generateRandomElement(){
 	string randstr;
+	map<int,string> keys = getKeys();
+	map<int,string>::iterator it;
+	vector<int> list;
 	
+	for (it = keys.begin(); it != keys.end(); it++) {
+		list.push_back(it->first);
+	}
+
 	for (unsigned int i = 0; i < strSize; i++) {
-		randstr.push_back( (char) (rand()%256));
+		randstr.push_back( (char) list[(rand()%list.size())] );
 	}
 	return randstr;
 }

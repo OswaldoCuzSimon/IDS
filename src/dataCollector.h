@@ -11,40 +11,50 @@
 using namespace std;
 
 string to_string(int num);
-vector<int> obtenerMuestra(vector<int> poblacion,int tamMuestra, int lenPalabra);
+vector<char> obtenerMuestra(vector<char> poblacion,int tamMuestra, int lenPalabra);
 void createBinary(char urltext[], char urlbin[]);
+void printData(map<string,vector<int> > data);
+void printData(vector<char> data);
 map<int,string> getKeys();
 string toVectorStr(vector<int> data);
-vector<string> convertir(map<string,vector<int> > data);
+vector<string> convertir(vector<char> data);
+void printData(vector<string> data);
 
 void createBinary(char urltext[], char urlbin[]){
 	FILE *fp;
-	char title[100],*text,renglon[2000];
+//	char title[100],*text,renglon[1000000];
 	int tecla;
-	vector<int>  poblacion,muestra;
-	map<string,vector<int> > data;
-	
+	vector<char> data;
 	srand (time(NULL));
 	
 	fp = fopen ( urltext, "r");
-	if (fp==NULL) {fprintf(stderr,"File not found: %s\n",urltext); exit (1);}
-	
-	while(fscanf(fp,"%[^\n]",renglon)==1){
-		getc(fp);
-		text=renglon;
-		if(sscanf(renglon,"%s %[^\n]",title,renglon)==2){
-			printf("%s %s\n",title,text);
-		}
-		if(strlen(renglon)>0){
-			while(sscanf(renglon,"%d",&tecla)==1){
-				poblacion.push_back(tecla);
+	if (fp==NULL) {fprintf(stderr,"File not found: %s\n",urltext); return;}
+	/*int key;
+	char c;
+	while(fscanf(fp,"%s",title)==1){
+		vector<int>  poblacion;
+		while(1){
+			int r=fscanf(fp,"%d%c",&key,&c);
+			if(r<=0||c=='\n'||isalpha(c)){
+				if(poblacion.size()>0){
+					vector<int> muestra=obtenerMuestra(poblacion,100,10);
+//					fprintf(stderr,"%s\n",title);
+				}
+				break;
 			}
-			muestra=obtenerMuestra(poblacion,100,10);
-			data.insert(pair<string,vector<int> > (title,muestra));
+//			fprintf(stderr,"%d ",key);
+			poblacion.push_back(c);
+			
 		}
+	}*/
+	while(fscanf(fp,"%d",&tecla)==1){
+		data.push_back((char)tecla);
 	}
+	printf("%d\n",data.size());
+	vector<char> muestra=obtenerMuestra(data,(int)(data.size()/2),10);
 	fclose(fp);
-	writeData(urlbin,data);
+	printData(muestra);
+	writeVector(urlbin,muestra);
 	
 }
 string to_string(int num){
@@ -52,15 +62,14 @@ string to_string(int num){
 	sprintf(str,"%d",num);
 	return string(str);
 }
-vector<int> obtenerMuestra(vector<int> poblacion,int tamMuestra, int lenPalabra){
-	vector<int> muestra;
+vector<char> obtenerMuestra(vector<char> poblacion,int tamMuestra, int lenPalabra){
+	vector<char> muestra;
 	int tam;
-	tamMuestra=tamMuestra*lenPalabra;
 	tam = poblacion.size();
 	
 	if(tamMuestra>tam){
 		while(poblacion.size()<(unsigned int)tamMuestra){
-			poblacion.push_back(0);
+			poblacion.push_back((char)0);
 		}
 		return poblacion;
 	}
@@ -78,9 +87,9 @@ map<int,string> getKeys(){
 	int key;
 	char value[11];
 	map<int,string> keys;
-	
-	fp = fopen ( "keys.conf", "r" );        
-	if (fp==NULL) {fputs ("File error",stderr); exit (1);}
+	char filename[]="keys.conf";
+	fp = fopen ( filename, "r" );        
+	if (fp==NULL) {fprintf (stderr,"File error %s\n",filename); return keys;}
 	
 	while(fscanf(fp,"%d %s",&key,value)==2){
 		keys.insert( pair<int,string>(key,value) );
@@ -89,12 +98,16 @@ map<int,string> getKeys(){
 	fclose ( fp );
 	return keys;
 }
-vector<string> convertir(map<string,vector<int> > data){
-	map<string,vector<int> >::iterator it;
+vector<string> convertir(vector<char>  data, int strSize){
 	vector<string> v;
-	
-	for(it=data.begin();it!=data.end();it++){
-		v.push_back(toVectorStr(it->second) );
+	unsigned int i;
+	for(i=0;i<data.size();i+=strSize){
+		string s;
+		for (int j = i; j < strSize; j++) {
+			s.push_back(data[j]);
+		}
+		v.push_back(s);
+		s.clear();
 	}
 	return v;
 }
@@ -105,6 +118,28 @@ string toVectorStr(vector<int> data){
 		str.push_back((char)data[i]);
 	}
 	return str;
+}
+void printData(map<string,vector<int> > data){
+	map<string,vector<int> >::iterator it;
+	for(it=data.begin();it!=data.end();it++){
+		cout<<it->first<<" ";
+		for (int i:it->second) {
+			cout<<i<<" ";
+		}
+		cout<<endl;
+	}
+	
+}
+void printData(vector<char> data){
+	for (int i:data) {
+		cout<<(int)i<<" ";
+	}
+	cout<<endl;
+}
+void printData(vector<string> data){
+	for(string s: data){
+		cout<<s<<" ";
+	}
 }
 #endif	/* DATACOLLECTOR_H */
 
